@@ -8,7 +8,7 @@ from claf.model.base import ModelWithTokenEmbedder
 from claf.model.reading_comprehension.mixin import SQuADv2
 from claf.modules import attention, initializer
 from claf.modules import functional as f
-
+from claf.model.reading_comprehension.mac_model import MACNetwork
 
 @register("model:docqa_no_answer")
 class DocQA_No_Answer(SQuADv2, ModelWithTokenEmbedder):
@@ -98,6 +98,8 @@ class DocQA_No_Answer(SQuADv2, ModelWithTokenEmbedder):
         self.bi_attention = attention.DocQAAttention(rnn_dim, linear_dim)
         self.attn_linear = nn.Linear(rnn_dim * 8, linear_dim)
 
+        self.mac = MACNetwork(linear_dim)
+        
         self.modeling_rnn = nn.GRU(
             input_size=linear_dim,
             hidden_size=rnn_dim,
@@ -197,11 +199,13 @@ class DocQA_No_Answer(SQuADv2, ModelWithTokenEmbedder):
         query_encoded = self.dropout(query_encoded)
 
         # Attention -> Projection
-        context_attnded = self.bi_attention(
-            context_encoded, context_mask, query_encoded, query_mask
-        )
-        context_attnded = self.activation_fn(self.attn_linear(context_attnded))  # B X C_L X dim*2
+        _, _, outs = self.mac(context_encoded, query_encoded, query_mask.sum(1), query_mask, context_mask)
+        #context_attnded = self.bi_attention(
+        #    context_encoded, context_mask, query_encoded, query_mask
+        #)
+        #context_attnded = self.activation_fn(self.attn_linear(context_attnded))  # B X C_L X dim*2
 
+        context_attnded = outs[-1]
         # Residual Self-Attention
         context_attnded = self.dropout(context_attnded)
         context_encoded = f.forward_rnn_with_pack(

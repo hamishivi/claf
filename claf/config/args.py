@@ -131,7 +131,8 @@ def set_gpu_env(config):
         config.nsml.dataset_path = nsml.DATASET_PATH
         config.gpu_num = int(nsml.GPU_NUM)
     else:
-        config.gpu_num = len(getattr(config, "cuda_devices", []))
+        config.cuda_devices = [0]
+        config.gpu_num = 1#len(getattr(config, "cuda_devices", []))
 
     if not config.use_gpu:
         config.gpu_num = 0

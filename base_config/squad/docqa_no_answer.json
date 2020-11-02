@@ -46,7 +46,7 @@
             },
             "embedding": {
                 "embed_dim": 300,
-                "pretrained_path": "<glove.840B.300d.txt path>",
+                "pretrained_path": "./glove.840B.300d.txt",
                 "trainable": false,
                 "dropout": 0.2
             }
